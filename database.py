@@ -26,7 +26,6 @@ class Users(Model):
     __tablename__ = "users"
 
     id: Mapped[intpk]
-    username: Mapped[str]
     name: Mapped[str]
     age: Mapped[int]
     gender: Mapped[Genders]
