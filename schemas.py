@@ -35,6 +35,15 @@ class QuestionnaireGetForFeed(BaseModel):
     text: str
 
 
+class GetQuestionnaireOnId(BaseModel):
+    id: int
+
+
+class LikesPost(BaseModel):
+    user_id: int
+    questionnaire_id: int
+
+
 
 
 
