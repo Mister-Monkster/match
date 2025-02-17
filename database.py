@@ -29,8 +29,8 @@ class Users(Model):
     name: Mapped[str]
     age: Mapped[int]
     gender: Mapped[Genders]
-    # questionnaires_id: Mapped[int] = mapped_column(ForeignKey('questionnaires.id', ondelete="CASCADE"))
     questionnaire: Mapped[list["Questionnaires"]] = relationship(back_populates='user')
+    activity: Mapped[int] = mapped_column(default=0)
 
 
 class Questionnaires(Model):
@@ -40,6 +40,20 @@ class Questionnaires(Model):
     text: Mapped[Annotated[str, 2048]]
     user_id: Mapped[int] = mapped_column(ForeignKey('users.id', ondelete="CASCADE"))
     user: Mapped[list["Users"]] = relationship(back_populates='questionnaire')
+    likes: Mapped[int] = mapped_column(default=0)
+
+
+class Likes(Model):
+    __tablename__ = 'Likes'
+
+    user_id: Mapped[int] = mapped_column(
+        ForeignKey('users.id', ondelete="CASCADE"),
+        primary_key=True
+    )
+    questionnaire_id: Mapped[int] = mapped_column(
+        ForeignKey('questionnaires.id', ondelete="CASCADE"),
+        primary_key=True
+    )
 
 
 async def create_tables():
