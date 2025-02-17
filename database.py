@@ -1,7 +1,7 @@
 import enum
-from typing import Optional, Annotated
+from typing import Annotated
 
-from sqlalchemy import ForeignKey, Column, Integer
+from sqlalchemy import ForeignKey
 from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
 

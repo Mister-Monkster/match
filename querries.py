@@ -1,8 +1,7 @@
-from sqlalchemy import select, and_, update, values
+from sqlalchemy import select, and_, update
 
-from database import async_session, Users, Questionnaires, Likes
-from schemas import UserPost, QuestionnairePost, QuestionnaireGet, UserGet, QuestionnaireGetForFeed, UserGetForFeed, \
-    GetQuestionnaireOnId, LikesPost, UserGetOne
+from database import Users, Questionnaires, Likes
+from schemas import UserPost, QuestionnairePost, QuestionnaireGetForFeed, UserGetForFeed, LikesPost
 
 
 async def get_questionnaire(user_id: int, session):

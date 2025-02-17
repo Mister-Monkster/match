@@ -1,16 +1,13 @@
-import asyncio
-from contextlib import asynccontextmanager
 from typing import Annotated
 
-from fastapi import FastAPI, HTTPException, Depends
+from fastapi import FastAPI, Depends
 import uvicorn
-from pydantic import BaseModel
+
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from database import create_tables, delete_tables, async_session, Users
+from database import create_tables, delete_tables, async_session
 from querries import add_user, add_questionnaire, get_questionnaire, get_feed, update_questionnaires, send_like
-from schemas import UserPost, QuestionnairePost, QuestionnaireGet, UserGet, UserGetOne, UserGetForFeed, \
-    QuestionnaireGetForFeed, GetQuestionnaireOnId, LikesPost
+from schemas import UserPost, QuestionnairePost, QuestionnaireGet, UserGetOne, LikesPost
 
 # @asynccontextmanager
 # async def lifespan(app: FastAPI):
