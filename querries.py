@@ -85,6 +85,8 @@ async def get_like(user_id: int, questionnaire_id: int, session):
 
 
 async def send_like(like: LikesPost, session):
+    if like.user_id == like.questionnaire_id:
+        return {'message': "You can't liking yourself"}
     user_obj = await get_user(like.user_id, session)
     questionnaire_obj = await get_questionnaire_on_id(like.questionnaire_id, session)
     user_obj = user_obj[0]
