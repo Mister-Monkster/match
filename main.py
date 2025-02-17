@@ -28,41 +28,49 @@ async def get_session():
 
 SessionDep = Annotated[AsyncSession, Depends(get_session)]
 
+tags = ["Match"]
 
 @app.post('/post-users',
-          summary='Добавить пользователя')
+          summary='Добавить пользователя',
+          tags=tags)
 async def add_users(user: Annotated[UserPost, Depends()], session: SessionDep):
     new_user = await add_user(user, session)
     return new_user
 
 
 @app.post('/post-questionnaire',
-          summary='Добавить анкету')
+          summary='Добавить анкету',
+          tags=tags)
 async def add_questionnaires(questionnaire: Annotated[QuestionnairePost, Depends()], session: SessionDep):
     new_questionnaire = await add_questionnaire(questionnaire, session)
     return new_questionnaire
 
-@app.post('/update-questionnaire')
+@app.post('/update-questionnaire',
+          summary='Обновить анкету',
+          tags=tags)
 async def update_questionnaire(questionnaire: Annotated[QuestionnairePost, Depends()], session: SessionDep):
     return await update_questionnaires(questionnaire, session)
 
 
 @app.get("/get-questionnaires",
-         summary='Получить анкету')
+         summary='Получить анкету',
+          tags=tags)
 async def get_questionnaires(questionnare: Annotated[QuestionnaireGet, Depends()], session: SessionDep):
     questionnaires = await get_questionnaire(user_id=questionnare.user_id, session=session)
     return questionnaires
 
 
 @app.get(path="/get-feed",
-         summary='Лента')
+         summary='Лента',
+          tags=tags)
 async def get_feed_func(user: Annotated[UserGetOne, Depends()], session: SessionDep):
     users = await get_feed(user.id, session)
     return users
 
 
 @app.post(path='/send-likes',
-          summary='Поставить лайк👍')
+          summary='Поставить лайк👍',
+          tags=tags)
 async def send_likes(like: Annotated[LikesPost, Depends()],
                      session: SessionDep):
     like = await send_like(like, session)
