@@ -1,4 +1,3 @@
-from contextlib import asynccontextmanager
 from typing import Annotated
 
 from fastapi import FastAPI, Depends
@@ -6,19 +5,11 @@ import uvicorn
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from database import create_tables, delete_tables, async_session
+from database import async_session
 from queries import add_user, add_questionnaire, get_questionnaire, get_feed, update_questionnaires, send_like, \
     show_my_likes, murals_likes
 from schemas import UserPost, QuestionnairePost, QuestionnaireGet, UserGetOne, LikesPost, SendLike
 
-# @asynccontextmanager
-# async def lifespan(app: FastAPI):
-#     await delete_tables()
-#     print('База очищена')
-#     await create_tables()
-#     print('База готова к работе')
-#     yield
-#     print("Выключение")lifespan=lifespan
 
 app = FastAPI()
 

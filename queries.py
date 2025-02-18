@@ -1,6 +1,6 @@
 from sqlalchemy import select, and_, update, delete
 
-from database import Users, Questionnaires, Likes
+from models import Users, Questionnaires, Likes
 from schemas import UserPost, QuestionnairePost, QuestionnaireGetForFeed, UserGetForFeed, LikesPost, UserGetOne, \
     SendLike
 
