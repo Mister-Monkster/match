@@ -4,11 +4,44 @@ from database import Users, Questionnaires, Likes
 from schemas import UserPost, QuestionnairePost, QuestionnaireGetForFeed, UserGetForFeed, LikesPost, UserGetOne
 
 
+async def get_user(id: int, session):
+    query = select(Users).where(Users.id == id)
+    res = await session.execute(query)
+    res = res.first()
+    if res:
+        return res[0]
+    else:
+        return {"message": "no items"}
+
+
 async def get_questionnaire(user_id: int, session):
     query = select(Questionnaires).where(Questionnaires.user_id == user_id)
     res = await session.execute(query)
-    res = res.scalars().all()
-    return res
+    res = res.first()
+    if res:
+        return res[0]
+    else:
+        return {"message": "no items"}
+
+
+async def get_questionnaire_on_id(id: int, session):
+    query = select(Questionnaires).where(Questionnaires.id == id)
+    res = await session.execute(query)
+    res = res.first()
+    if res:
+        return res[0]
+    else:
+        return {"message": "no items"}
+
+
+async def get_like(from_id: int, to_id: int, session):
+    query = select(Likes).where(Likes.from_questionnaire_id == from_id, Likes.to_questionnaire_id == to_id)
+    like = await session.execute(query)
+    res = like.first()
+    if res:
+        return res[0]
+    else:
+        return {"message": "no items"}
 
 
 async def add_user(user: UserPost, session):
@@ -24,7 +57,7 @@ async def add_user(user: UserPost, session):
 
 async def add_questionnaire(questionnaire: QuestionnairePost, session):
     questionnaires = await get_questionnaire(user_id=questionnaire.user_id, session=session)
-    if questionnaires:
+    if not isinstance(questionnaires, dict):
         return {'message': "questionnaire already exist"}
     else:
         questionnaire_dict = questionnaire.model_dump()
@@ -32,12 +65,6 @@ async def add_questionnaire(questionnaire: QuestionnairePost, session):
         session.add(new_questionnaire)
         await session.commit()
         return {'ok': True}
-
-
-async def get_user(id: int, session):
-    query = select(Users).where(Users.id == id)
-    res = await session.execute(query)
-    return res.scalars().all()
 
 
 async def get_feed(id: int, session):
@@ -60,8 +87,10 @@ async def get_feed(id: int, session):
         )
 
         users[f'{us.id=}'] = {"user": result1, "questionnairie": result2}
-    return users
-
+    if users:
+        return users
+    else:
+        return {"meassge": "No items"}
 
 async def update_questionnaires(questionnaire: QuestionnairePost, session):
     query = (update(Questionnaires)
@@ -72,36 +101,23 @@ async def update_questionnaires(questionnaire: QuestionnairePost, session):
     return {'ok': True}
 
 
-async def get_questionnaire_on_id(id: int, session):
-    query = select(Questionnaires).where(Questionnaires.id == id)
-    res = await session.execute(query)
-    return res.scalars().all()
-
-
-async def get_like(user_id: int, questionnaire_id: int, session):
-    query = select(Likes).where(Likes.user_id == user_id, Likes.questionnaire_id == questionnaire_id)
-    like = await session.execute(query)
-    return like.scalars().all()
-
-
 async def send_like(like: LikesPost, session):
-    if like.user_id == like.questionnaire_id:
+    if like.from_questionnaire_id == like.to_questionnaire_id:
         return {'message': "You can't liking yourself"}
-    user_obj = await get_user(like.user_id, session)
-    questionnaire_obj = await get_questionnaire_on_id(like.questionnaire_id, session)
-    user_obj = user_obj[0]
-    questionnaire_obj = questionnaire_obj[0]
-    is_like = await get_like(like.user_id, like.questionnaire_id, session)
-    if not is_like:
+    from_obj = await get_questionnaire_on_id(like.from_questionnaire_id, session)
+    to_obj = await get_questionnaire_on_id(like.to_questionnaire_id, session)
+    to_user = await get_user(to_obj.user_id, session)
+    is_like = await get_like(like.from_questionnaire_id, like.to_questionnaire_id, session)
+    if isinstance(is_like, dict):
         query_user = (
             update(Users)
-            .where(Users.id == user_obj.id)
-            .values(activity = user_obj.activity + 1)
+            .where(Users.id == from_obj.user_id)
+            .values(activity = to_user.activity + 1)
         )
         query_questionnaire = (
             update(Questionnaires)
-            .where(Questionnaires.id == questionnaire_obj.id)
-            .values(likes=questionnaire_obj.likes + 1)
+            .where(Questionnaires.id == to_obj.id)
+            .values(likes=to_obj.likes + 1)
         )
         like_dict = like.model_dump()
         new_like = Likes(**like_dict)
@@ -116,18 +132,19 @@ async def send_like(like: LikesPost, session):
 
 async def show_my_likes(user: UserGetOne, session):
     questionnaire = await get_questionnaire(user.id, session)
-    questionnaire = questionnaire[0]
     query = (select(Likes)
-             .where(Likes.questionnaire_id == questionnaire.id,Likes.status==False))
+             .where(Likes.to_questionnaire_id == questionnaire.id, Likes.status==False))
     likes = await session.execute(query)
     likes = likes.scalars().all()
     likes_dict = {}
     for like in likes:
-        user = await get_user(like.user_id, session)
-        user = user[0]
-        user_questionnaire = await get_questionnaire(like.user_id, session)
-        user_questionnaire = user_questionnaire[0]
-        likes_dict[f'{like.user_id=}'] = {"user": {"name": user.name, "age": user.age},
+        user_questionnaire = await get_questionnaire(like.from_questionnaire_id, session)
+        user = await get_user(user_questionnaire.user_id , session)
+        likes_dict[f'from_user:{user.id}'] = {"user": {"name": user.name, "age": user.age},
                                           "questionnaire": {"text": user_questionnaire.text}}
     return likes_dict
+
+
+async def mutural_likes(session):
+    pass
 
