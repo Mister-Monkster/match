@@ -1,4 +1,4 @@
-from sqlalchemy import select, and_, update, delete
+from sqlalchemy import select, and_, update, delete, inspect
 
 from models import Users, Questionnaires, Likes
 from schemas import UserPost, QuestionnairePost, QuestionnaireGetForFeed, UserGetForFeed, LikesPost, UserGetOne, \
@@ -109,20 +109,24 @@ async def update_questionnaires(questionnaire: QuestionnairePost, session):
 async def send_like(like: LikesPost, session):
     if like.from_questionnaire_id == like.to_questionnaire_id:
         return {'message': "You can't liking yourself"}
-    from_obj = await get_questionnaire_on_id(like.from_questionnaire_id, session)
-    to_obj = await get_questionnaire_on_id(like.to_questionnaire_id, session)
-    to_user = await get_user(to_obj.user_id, session)
     is_like = await get_like(from_id=like.from_questionnaire_id, to_id=like.to_questionnaire_id, session=session)
     if isinstance(is_like, dict):
+        query = (
+            select(Questionnaires, Users)
+            .join(Users, Questionnaires.user_id == Users.id)
+            .where(Questionnaires.id.in_([like.from_questionnaire_id, like.to_questionnaire_id]))
+        )
+        result = await session.execute(query)
+        from_obj, to_obj = result.all()
         query_user = (
             update(Users)
-            .where(Users.id == from_obj.user_id)
-            .values(activity=to_user.activity + 1)
+            .where(Users.id == from_obj[0].user_id)
+            .values(activity=from_obj[1].activity + 1)
         )
         query_questionnaire = (
             update(Questionnaires)
-            .where(Questionnaires.id == to_obj.id)
-            .values(likes=to_obj.likes + 1)
+            .where(Questionnaires.id == to_obj[0].id)
+            .values(likes=to_obj[0].likes + 1)
         )
         like_dict = like.model_dump()
         new_like = Likes(**like_dict)
