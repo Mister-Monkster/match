@@ -46,6 +46,9 @@ class Questionnaires(Model):
 class Likes(Model):
     __tablename__ = 'Likes'
 
+    id: Mapped[int] = mapped_column(
+        primary_key=True,
+        autoincrement=True)
     from_questionnaire_id: Mapped[int] = mapped_column(
         ForeignKey('questionnaires.id', ondelete="CASCADE"),
         primary_key=True

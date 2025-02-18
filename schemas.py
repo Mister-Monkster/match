@@ -35,7 +35,8 @@ class LikesPost(BaseModel):
 
 
 class SendLike(BaseModel):
-    pass
+    like_id: int
+    response: bool
 
 
 

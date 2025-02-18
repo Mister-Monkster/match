@@ -1,7 +1,8 @@
-from sqlalchemy import select, and_, update
+from sqlalchemy import select, and_, update, delete
 
 from database import Users, Questionnaires, Likes
-from schemas import UserPost, QuestionnairePost, QuestionnaireGetForFeed, UserGetForFeed, LikesPost, UserGetOne
+from schemas import UserPost, QuestionnairePost, QuestionnaireGetForFeed, UserGetForFeed, LikesPost, UserGetOne, \
+    SendLike
 
 
 async def get_user(id: int, session):
@@ -34,8 +35,11 @@ async def get_questionnaire_on_id(id: int, session):
         return {"message": "no items"}
 
 
-async def get_like(from_id: int, to_id: int, session):
-    query = select(Likes).where(Likes.from_questionnaire_id == from_id, Likes.to_questionnaire_id == to_id)
+async def get_like(session, id=None, from_id=None, to_id=None):
+    if id:
+        query = select(Likes).where(Likes.id == id)
+    else:
+        query = select(Likes).where(Likes.from_questionnaire_id == from_id, Likes.to_questionnaire_id == to_id)
     like = await session.execute(query)
     res = like.first()
     if res:
@@ -70,8 +74,8 @@ async def add_questionnaire(questionnaire: QuestionnairePost, session):
 async def get_feed(id: int, session):
     user = await get_user(id, session)
     query = select(Users, Questionnaires).join(Questionnaires).where(and_(Users.age <= user.age + 3,
-                                               Users.age >= user.age - 3,
-                                               Users.gender != user.gender))
+                                                                          Users.age >= user.age - 3,
+                                                                          Users.gender != user.gender))
     res = await session.execute(query)
     users = {}
 
@@ -92,6 +96,7 @@ async def get_feed(id: int, session):
     else:
         return {"meassge": "No items"}
 
+
 async def update_questionnaires(questionnaire: QuestionnairePost, session):
     query = (update(Questionnaires)
              .where(Questionnaires.user_id == questionnaire.user_id)
@@ -107,12 +112,12 @@ async def send_like(like: LikesPost, session):
     from_obj = await get_questionnaire_on_id(like.from_questionnaire_id, session)
     to_obj = await get_questionnaire_on_id(like.to_questionnaire_id, session)
     to_user = await get_user(to_obj.user_id, session)
-    is_like = await get_like(like.from_questionnaire_id, like.to_questionnaire_id, session)
+    is_like = await get_like(from_id=like.from_questionnaire_id, to_id=like.to_questionnaire_id, session=session)
     if isinstance(is_like, dict):
         query_user = (
             update(Users)
             .where(Users.id == from_obj.user_id)
-            .values(activity = to_user.activity + 1)
+            .values(activity=to_user.activity + 1)
         )
         query_questionnaire = (
             update(Questionnaires)
@@ -133,18 +138,32 @@ async def send_like(like: LikesPost, session):
 async def show_my_likes(user: UserGetOne, session):
     questionnaire = await get_questionnaire(user.id, session)
     query = (select(Likes)
-             .where(Likes.to_questionnaire_id == questionnaire.id, Likes.status==False))
+             .where(Likes.to_questionnaire_id == questionnaire.id, Likes.status == False))
     likes = await session.execute(query)
     likes = likes.scalars().all()
     likes_dict = {}
     for like in likes:
         user_questionnaire = await get_questionnaire(like.from_questionnaire_id, session)
-        user = await get_user(user_questionnaire.user_id , session)
+        user = await get_user(user_questionnaire.user_id, session)
         likes_dict[f'from_user:{user.id}'] = {"user": {"name": user.name, "age": user.age},
-                                          "questionnaire": {"text": user_questionnaire.text}}
+                                              "questionnaire": {"text": user_questionnaire.text}}
     return likes_dict
 
 
-async def mutural_likes(session):
-    pass
-
+async def murals_likes(like: SendLike, session):
+    got_like = await get_like(session=session, id=like.like_id)
+    if like.response:
+        got_like.status = True
+        response_like = Likes(
+            from_questionnaire_id=got_like.to_questionnaire_id,
+            to_questionnaire_id=got_like.from_questionnaire_id,
+            status=True
+        )
+        session.add(response_like)
+        await session.commit()
+        return {"ok": True, "message": "Response successfully sent"}
+    else:
+        query = delete(Likes).where(Likes.id == got_like.id)
+        await session.execute(query)
+        await session.commit()
+        return {"ok": True, "message": "You're not like this questionnaire"}

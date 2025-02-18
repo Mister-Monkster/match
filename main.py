@@ -7,10 +7,9 @@ import uvicorn
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from database import create_tables, delete_tables, async_session
-from querries import add_user, add_questionnaire, get_questionnaire, get_feed, update_questionnaires, send_like, \
-    show_my_likes
-from schemas import UserPost, QuestionnairePost, QuestionnaireGet, UserGetOne, LikesPost
-
+from queries import add_user, add_questionnaire, get_questionnaire, get_feed, update_questionnaires, send_like, \
+    show_my_likes, murals_likes
+from schemas import UserPost, QuestionnairePost, QuestionnaireGet, UserGetOne, LikesPost, SendLike
 
 # @asynccontextmanager
 # async def lifespan(app: FastAPI):
@@ -87,12 +86,13 @@ async def get_my_likes(user: Annotated[UserGetOne, Depends()], session: SessionD
     res = await show_my_likes(user, session)
     return res
 
-
-@app.post('response-likes',
+@app.post('/response-likes',
           summary="Поставить лайк в ответ👍",
           tags=[tags[1]])
-async def response_like(SendLike,):
-    pass
+async def response_like(like: Annotated[SendLike, Depends()], session: SessionDep):
+    res = await murals_likes(like, session)
+    return res
+
 
 if __name__ == "__main__":
     uvicorn.run(app)
