@@ -46,15 +46,15 @@ class Questionnaires(Model):
 class Likes(Model):
     __tablename__ = 'Likes'
 
-    user_id: Mapped[int] = mapped_column(
-        ForeignKey('users.id', ondelete="CASCADE"),
-        primary_key=True
-    )
-    questionnaire_id: Mapped[int] = mapped_column(
+    from_questionnaire_id: Mapped[int] = mapped_column(
         ForeignKey('questionnaires.id', ondelete="CASCADE"),
         primary_key=True
     )
-    status: Mapped[bool] = False
+    to_questionnaire_id: Mapped[int] = mapped_column(
+        ForeignKey('questionnaires.id', ondelete="CASCADE"),
+        primary_key=True
+    )
+    status: Mapped[bool] = mapped_column(default=False)
 
 
 async def create_tables():

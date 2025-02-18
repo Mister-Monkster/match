@@ -1,5 +1,3 @@
-from typing import Optional
-
 from pydantic import BaseModel
 
 
@@ -7,10 +5,6 @@ class UserPost(BaseModel):
     name: str
     age: int
     gender: str
-
-
-class UserGet(UserPost):
-    id: int
 
 
 class UserGetOne(BaseModel):
@@ -35,13 +29,13 @@ class QuestionnaireGetForFeed(BaseModel):
     text: str
 
 
-class GetQuestionnaireOnId(BaseModel):
-    id: int
-
-
 class LikesPost(BaseModel):
-    user_id: int
-    questionnaire_id: int
+    from_questionnaire_id: int
+    to_questionnaire_id: int
+
+
+class SendLike(BaseModel):
+    pass
 
 
 
