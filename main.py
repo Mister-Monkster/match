@@ -6,7 +6,8 @@ import uvicorn
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from database import create_tables, delete_tables, async_session
-from querries import add_user, add_questionnaire, get_questionnaire, get_feed, update_questionnaires, send_like
+from querries import add_user, add_questionnaire, get_questionnaire, get_feed, update_questionnaires, send_like, \
+    show_my_likes
 from schemas import UserPost, QuestionnairePost, QuestionnaireGet, UserGetOne, LikesPost
 
 # @asynccontextmanager
@@ -75,6 +76,14 @@ async def send_likes(like: Annotated[LikesPost, Depends()],
                      session: SessionDep):
     like = await send_like(like, session)
     return like
+
+
+@app.get(path='/my-likes',
+         summary='Получить мои лайки👍',
+         tags=tags)
+async def get_my_likes(user: Annotated[UserGetOne, Depends()], session: SessionDep):
+    res = await show_my_likes(user, session)
+    return res
 
 
 if __name__ == "__main__":
