@@ -54,6 +54,7 @@ class Likes(Model):
         ForeignKey('questionnaires.id', ondelete="CASCADE"),
         primary_key=True
     )
+    status: Mapped[bool] = False
 
 
 async def create_tables():

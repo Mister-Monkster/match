@@ -1,7 +1,7 @@
 from sqlalchemy import select, and_, update
 
 from database import Users, Questionnaires, Likes
-from schemas import UserPost, QuestionnairePost, QuestionnaireGetForFeed, UserGetForFeed, LikesPost
+from schemas import UserPost, QuestionnairePost, QuestionnaireGetForFeed, UserGetForFeed, LikesPost, UserGetOne
 
 
 async def get_questionnaire(user_id: int, session):
@@ -101,7 +101,7 @@ async def send_like(like: LikesPost, session):
         query_questionnaire = (
             update(Questionnaires)
             .where(Questionnaires.id == questionnaire_obj.id)
-            .values(likes = questionnaire_obj.likes + 1)
+            .values(likes=questionnaire_obj.likes + 1)
         )
         like_dict = like.model_dump()
         new_like = Likes(**like_dict)
@@ -112,3 +112,22 @@ async def send_like(like: LikesPost, session):
         return {"ok": True}
     else:
         return {"ok": True, "message": "You already liked this questionnaire"}
+
+
+async def show_my_likes(user: UserGetOne, session):
+    questionnaire = await get_questionnaire(user.id, session)
+    questionnaire = questionnaire[0]
+    query = (select(Likes)
+             .where(Likes.questionnaire_id == questionnaire.id,Likes.status==False))
+    likes = await session.execute(query)
+    likes = likes.scalars().all()
+    likes_dict = {}
+    for like in likes:
+        user = await get_user(like.user_id, session)
+        user = user[0]
+        user_questionnaire = await get_questionnaire(like.user_id, session)
+        user_questionnaire = user_questionnaire[0]
+        likes_dict[f'{like.user_id=}'] = {"user": {"name": user.name, "age": user.age},
+                                          "questionnaire": {"text": user_questionnaire.text}}
+    return likes_dict
+
